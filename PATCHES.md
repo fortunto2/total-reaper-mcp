@@ -6,6 +6,19 @@ upstream; the REAPER-config bits are local setup notes.
 
 ## Code (in this repo — proposed upstream)
 
+**`lua/mcp_bridge.lua` — poll the requests that exist, not a fixed 1..1000 range**
+- `process_request()` looped `for i = 1, 1000` and probed `request_<i>.json` for
+  every id on every defer tick. Two costs: a thousand `file_exists()` calls per
+  tick whether or not anything was pending, and — the one that actually bites —
+  **any id outside that window was ignored in complete silence**. A client
+  writing `request_7000.json` (the docs only say "use free high slots") got no
+  reply, no error and no console line; the files simply accumulated in the
+  bridge directory forever. Debugging it means reading the Lua, because nothing
+  else tells you the id range even exists.
+- Now `pending_request_ids()` enumerates the directory with
+  `reaper.EnumerateFiles`, matches `request_(%d+)%.json`, and sorts, so any id
+  works and an idle bridge does no filesystem probing at all.
+
 **`server/bridge.py` — desync-proof file IPC**
 - Purge stale `request_*`/`response_*` files on `ReaperFileBridge.__init__` and
   clear the same-id pair before each request + on timeout. A `response_N.json`
