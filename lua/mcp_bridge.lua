@@ -4,14 +4,20 @@
 -- - All DSL (Domain Specific Language) functions for natural language control
 -- Profile selection is handled by the Python MCP server, not this bridge
 
--- Guard against a second defer loop: __startup.lua auto-runs this on launch,
--- so a manual re-run (or a re-run while already going) would otherwise spawn
--- a duplicate poller racing on the same request files. One loop only.
-if _G.__MCP_BRIDGE_RUNNING then
-    reaper.ShowConsoleMsg("REAPER MCP Bridge already running — ignoring duplicate start\n")
-    return
+-- One poller only. __startup.lua auto-runs this on launch, and a manual run
+-- of the action would start a second defer loop racing on the same request
+-- files. Each ReaScript run has its own Lua state, so a global flag cannot
+-- see the other loop; the running loop instead stamps a heartbeat into the
+-- process-wide ExtState, and a new start backs off while it is fresh.
+-- A stopped bridge stops beating, so a restart after a crash is never blocked.
+local HEARTBEAT_SECTION, HEARTBEAT_KEY = "mcp_bridge", "heartbeat"
+do
+    local last = tonumber(reaper.GetExtState(HEARTBEAT_SECTION, HEARTBEAT_KEY))
+    if last and reaper.time_precise() - last < 2.0 then
+        reaper.ShowConsoleMsg("REAPER MCP Bridge already running — ignoring duplicate start\n")
+        return
+    end
 end
-_G.__MCP_BRIDGE_RUNNING = true
 
 local bridge_dir = reaper.GetResourcePath() .. '/Scripts/mcp_bridge_data/'
 
@@ -4290,6 +4296,7 @@ reaper.ShowConsoleMsg("REAPER MCP Bridge (File-based, Full API) started\n")
 reaper.ShowConsoleMsg("Bridge directory: " .. bridge_dir .. "\n")
 
 function main()
+    reaper.SetExtState(HEARTBEAT_SECTION, HEARTBEAT_KEY, tostring(reaper.time_precise()), false)
     process_request()
     reaper.defer(main)
 end
