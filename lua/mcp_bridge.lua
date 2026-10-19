@@ -4,6 +4,15 @@
 -- - All DSL (Domain Specific Language) functions for natural language control
 -- Profile selection is handled by the Python MCP server, not this bridge
 
+-- Guard against a second defer loop: __startup.lua auto-runs this on launch,
+-- so a manual re-run (or a re-run while already going) would otherwise spawn
+-- a duplicate poller racing on the same request files. One loop only.
+if _G.__MCP_BRIDGE_RUNNING then
+    reaper.ShowConsoleMsg("REAPER MCP Bridge already running — ignoring duplicate start\n")
+    return
+end
+_G.__MCP_BRIDGE_RUNNING = true
+
 local bridge_dir = reaper.GetResourcePath() .. '/Scripts/mcp_bridge_data/'
 
 -- Create bridge directory if it doesn't exist
