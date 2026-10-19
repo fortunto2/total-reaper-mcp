@@ -2,6 +2,31 @@
 
 An MCP (Model Context Protocol) server that exposes [REAPER DAW](https://www.reaper.fm/) functionality through a clean API interface.
 
+> **This is a fork** of [shiehn/total-reaper-mcp](https://github.com/shiehn/total-reaper-mcp), kept in
+> sync with it, used daily to drive REAPER from Claude Code. What it adds:
+>
+> - **A fresh clone installs.** The original tracked a `.venv` (symlinks to another machine's Python)
+>   and let pip resolve `mcp` 2.x, which renamed FastMCP: the server died on import. `.venv` is no
+>   longer tracked and `mcp<2` is pinned.
+> - **Any request id works.** The bridge enumerates pending request files instead of probing ids
+>   1..1000, so a client that starts from a random id no longer hangs without an answer.
+> - **Auto-start, one loop only.** `scripts/install_bridge.sh` also installs `Scripts/__startup.lua`
+>   (never over an existing one), so the bridge is up after every REAPER launch. A second start backs
+>   off while the running loop's heartbeat in ExtState is fresh, so two pollers never race on the same
+>   files. Test: `lua tests/lua/bridge_single_instance.lua`.
+>
+> **Tested setup (macOS):**
+>
+> ```bash
+> git clone https://github.com/fortunto2/total-reaper-mcp && cd total-reaper-mcp
+> /opt/homebrew/bin/python3.13 -m venv .venv && .venv/bin/pip install -e .
+> ./scripts/install_bridge.sh          # bridge + auto-start; restart REAPER
+> claude mcp add reaper -- "$PWD/.venv/bin/python" -m server.app --profile dsl-production
+> ```
+>
+> Use `install_bridge.sh`, not `install.sh`: the latter installs the bridge under another name
+> (`mcp_bridge.lua`), so running both leaves two bridges in REAPER.
+
 ![REAPER MCP Server](assets/repo-readme-image.png)
 
 ## Platform Support
