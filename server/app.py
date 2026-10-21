@@ -42,6 +42,7 @@ from .tools.tracks import register_track_tools
 from .tools.core_api import register_core_api_tools
 from .tools.media_items import register_media_items_tools
 from .tools.midi import register_midi_tools
+from .tools.lua_exec import register_lua_exec_tools
 from .tools.fx import register_fx_tools
 from .tools.project import register_project_tools
 from .tools.transport import register_transport_tools
@@ -136,6 +137,7 @@ CATEGORY_REGISTRY = {
     "Bus Routing & Mixing Workflows": register_bus_routing_tools,
     "Tempo & Time Management": register_tempo_time_tools,
     "Advanced MIDI Generation": register_advanced_midi_tools,
+    "Lua & MIDI Notes": register_lua_exec_tools,
 }
 
 def register_tools_by_profile(profile_name):

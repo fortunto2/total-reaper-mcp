@@ -14,6 +14,13 @@ An MCP (Model Context Protocol) server that exposes [REAPER DAW](https://www.rea
 >   (never over an existing one), so the bridge is up after every REAPER launch. A second start backs
 >   off while the running loop's heartbeat in ExtState is fresh, so two pollers never race on the same
 >   files. Test: `lua tests/lua/bridge_single_instance.lua`.
+> - **`run_lua`: any depth of the API in one call.** The bridge runs one function per request with
+>   JSON arguments, so a track or take handle can never be passed back in — walking tracks → items →
+>   takes → notes was impossible. `run_lua(code)` registers the code as an action, runs it, and
+>   returns its `return` value as JSON. Built on it, in the `dsl-production` profile:
+>   `midi_note_stats` (range and pitch histogram of a track) and `midi_transpose_notes` (move notes in
+>   a pitch range, drop ones that would double a sounding note, pooled items edited once, one undo
+>   step) — the arrangement fix for masking, e.g. a chord part's notes under C3 up an octave.
 >
 > **Tested setup (macOS):**
 >

@@ -84,7 +84,8 @@ TOOL_PROFILES = {
             "DSL",
             "Advanced MIDI Generation",  # For external MIDI generation
             "FX",  # For adding instruments
-            "Rendering & Freezing"  # For bouncing
+            "Rendering & Freezing",  # For bouncing
+            "Lua & MIDI Notes",  # run_lua, note stats, register transposes
         ]
     }
 }
